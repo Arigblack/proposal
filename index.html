@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forever With You 💖</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Poppins,sans-serif}
+body{background:#000;color:#fff;overflow:hidden;text-align:center}
+
+/* Sections */
+section{
+position:absolute;top:0;left:0;
+width:100%;height:100%;
+display:none;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+padding:20px;
+}
+.active{display:flex}
+
+/* Background Video */
+video.bg{
+position:fixed;top:0;left:0;
+min-width:100%;min-height:100%;
+object-fit:cover;
+z-index:-3;filter:brightness(.4)
+}
+
+/* Canvas */
+canvas{
+position:fixed;top:0;left:0;
+z-index:-2;pointer-events:none
+}
+
+/* Buttons */
+button{
+padding:10px 20px;
+border:none;border-radius:30px;
+background:#ff007f;color:#fff;
+margin:10px;cursor:pointer;
+transition:.2s
+}
+button:hover{transform:scale(1.08)}
+
+/* Timeline */
+.timeline{
+max-height:200px;overflow:auto;
+text-align:left;border-left:2px solid #ff4da6;
+padding-left:10px;width:90%;max-width:400px
+}
+
+/* Slider */
+.slider{
+display:flex;overflow-x:auto;
+scroll-snap-type:x mandatory;
+max-width:400px
+}
+.slider img{
+width:100%;max-width:300px;
+margin:10px;border-radius:15px;
+scroll-snap-align:center
+}
+
+/* Ring Box */
+.ring-box{
+width:150px;height:100px;
+background:#111;border-radius:10px;
+perspective:1000px;position:relative;
+margin:20px auto
+}
+.lid{
+width:100%;height:50px;
+background:#222;position:absolute;top:0;
+transform-origin:top;transition:1s
+}
+.ring-inside{
+position:absolute;bottom:10px;width:100%;
+font-size:40px;opacity:0;transition:1s
+}
+.ring-box.open .lid{transform:rotateX(-120deg)}
+.ring-box.open .ring-inside{opacity:1}
+
+/* Rotating Ring */
+.rotate-ring{
+font-size:60px;
+animation:spin 5s linear infinite
+}
+@keyframes spin{
+from{transform:rotateY(0)}
+to{transform:rotateY(360deg)}
+}
+
+.cinematic{opacity:0;transition:1.5s}
+.cinematic.show{opacity:1}
+
+.dev{
+position:fixed;bottom:10px;right:10px;
+font-size:12px;opacity:.5
+}
+</style>
+</head>
+
+<body>
+
+<video autoplay muted loop class="bg">
+<source src="rain.mp4">
+</video>
+
+<audio id="bgMusic" loop><source src="music.mp3"></audio>
+
+<canvas id="mainCanvas"></canvas>
+
+<!-- PASSWORD -->
+<section id="pass" class="active">
+<h2>Enter Secret Password 🔐</h2>
+<input type="password" id="pwd">
+<button onclick="checkPass()">Unlock ❤️</button>
+</section>
+
+<!-- INTRO -->
+<section id="intro">
+<video autoplay muted loop class="bg">
+<source src="couple.mp4">
+</video>
+<h1 id="typeName"></h1>
+<button onclick="show('shayari')">Next ❤️</button>
+</section>
+
+<!-- SHAYARI -->
+<section id="shayari">
+<h2>Sirf Tumhare Liye 💖</h2>
+<p>
+Teri muskurahat meri jaan hai,<br>
+Tera saath meri pehchaan hai,<br>
+Tu mile toh duniya roshan hai,<br>
+Tu na ho toh sab veeran hai.
+</p>
+<button onclick="show('story')">Next 🌹</button>
+</section>
+
+<!-- STORY -->
+<section id="story">
+<h2>Our Love Story 💕</h2>
+<div class="timeline">
+<p>✨ First Talk</p>
+<p>🌸 First Smile</p>
+<p>💑 First Realization</p>
+<p>💍 Forever Begins</p>
+</div>
+<button onclick="show('memories')">Memories 📸</button>
+</section>
+
+<!-- MEMORIES -->
+<section id="memories">
+<div class="slider">
+<img src="photo1.jpg">
+<img src="photo2.jpg">
+<img src="photo3.jpg">
+</div>
+<button onclick="show('special')">Special 💖</button>
+</section>
+
+<!-- SPECIAL -->
+<section id="special">
+<img src="photo2.jpg" style="max-width:300px;border-radius:15px">
+<h3>You Are My Everything 💕</h3>
+<button onclick="show('proposal')">Final 💍</button>
+</section>
+
+<!-- PROPOSAL -->
+<section id="proposal">
+<h2 id="proposalTitle">Will You Marry Me?</h2>
+<div id="secret"></div>
+
+<div class="ring-box" id="ringBox">
+<div class="lid"></div>
+<div class="ring-inside">💍</div>
+</div>
+
+<div class="rotate-ring">💍</div>
+
+<div id="cinematic" class="cinematic">
+From this moment I choose you forever 💖
+</div>
+
+<button onclick="ultimateYes()">Yes 😍</button>
+<button id="noBtn" onclick="crazyNo(this)">No 😜</button>
+<button onclick="openMap()">📍 Special Place</button>
+</section>
+
+<div class="dev">Developed by Aditya Mishra</div>
+
+<script>
+
+/* Navigation */
+function show(id){
+document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+}
+
+/* Swipe Navigation */
+let touchStartX=0;
+document.addEventListener("touchstart",e=>{
+touchStartX=e.changedTouches[0].screenX;
+},{passive:true});
+
+document.addEventListener("touchend",e=>{
+let diff=e.changedTouches[0].screenX-touchStartX;
+if(Math.abs(diff)>50){
+let active=document.querySelector("section.active");
+if(diff<0 && active.nextElementSibling) show(active.nextElementSibling.id);
+if(diff>0 && active.previousElementSibling) show(active.previousElementSibling.id);
+}
+},{passive:true});
+
+/* Password */
+function checkPass(){
+if(pwd.value==="iloveyou") show("intro");
+}
+
+/* Typewriter */
+let txt="My Princess ❤️",i=0;
+function type(){
+if(i<txt.length){
+typeName.innerHTML+=txt[i++];
+setTimeout(type,80);
+}}
+type();
+
+/* Secret Long Press (Mobile + Desktop) */
+let timer;
+proposalTitle.addEventListener("mousedown",startSecret);
+proposalTitle.addEventListener("mouseup",clearSecret);
+proposalTitle.addEventListener("touchstart",startSecret);
+proposalTitle.addEventListener("touchend",clearSecret);
+
+function startSecret(){
+timer=setTimeout(()=>secret.innerHTML="I Love You More Than Words 💖",1200);
+}
+function clearSecret(){clearTimeout(timer);}
+
+/* NO Button Move on Click + Typing */
+let noCount=0;
+function crazyNo(btn){
+moveNo(btn);
+}
+document.addEventListener("keydown",()=>moveNo(noBtn));
+
+function moveNo(btn){
+noCount++;
+btn.style.position="absolute";
+btn.style.left=Math.random()*80+"%";
+btn.style.top=Math.random()*80+"%";
+if(noCount>8) btn.style.display="none";
+}
+
+/* Google Map */
+function openMap(){
+window.open("https://www.google.com/maps?q=28.6139,77.2090");
+}
+
+/* Canvas Engine */
+const canvas=document.getElementById("mainCanvas");
+const ctx=canvas.getContext("2d");
+function resize(){
+canvas.width=innerWidth;
+canvas.height=innerHeight;
+}
+window.addEventListener("resize",resize);
+resize();
+
+let stars=[],fireworks=[],hearts=[],petals=[];
+
+for(let i=0;i<80;i++)
+stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*2});
+
+function loop(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+/* Stars */
+ctx.fillStyle="white";
+stars.forEach(s=>{
+ctx.beginPath();
+ctx.arc(s.x,s.y,s.r,0,6.28);
+ctx.fill();
+});
+
+/* Fireworks */
+fireworks.forEach((f,i)=>{
+f.a-=0.02;
+ctx.globalAlpha=f.a;
+ctx.fillStyle=f.c;
+ctx.fillRect(f.x,f.y,4,4);
+if(f.a<=0)fireworks.splice(i,1);
+});
+
+/* Hearts */
+hearts.forEach((h,i)=>{
+h.y-=1;
+ctx.fillText("❤️",h.x,h.y);
+if(h.y<0)hearts.splice(i,1);
+});
+
+/* Petals */
+petals.forEach((p,i)=>{
+p.y+=1;
+ctx.fillText("🌹",p.x,p.y);
+if(p.y>canvas.height)petals.splice(i,1);
+});
+
+ctx.globalAlpha=1;
+requestAnimationFrame(loop);
+}
+loop();
+
+/* Spawn Effects */
+setInterval(()=>petals.push({x:Math.random()*canvas.width,y:-10}),800);
+setInterval(()=>hearts.push({x:Math.random()*canvas.width,y:canvas.height}),2000);
+
+/* Shooting Star */
+function shootingStar(){
+fireworks.push({x:0,y:100,a:1,c:"#fff"});
+}
+
+/* Fireworks */
+function spawnFireworks(){
+for(let i=0;i<40;i++)
+fireworks.push({
+x:Math.random()*canvas.width,
+y:Math.random()*canvas.height/2,
+a:1,
+c:`hsl(${Math.random()*360},100%,50%)`
+});
+}
+
+/* Music + Sound */
+function fadeMusic(){
+bgMusic.volume=0;
+bgMusic.play();
+let v=0;
+let int=setInterval(()=>{
+if(v<1){v+=.05;bgMusic.volume=v}
+else clearInterval(int);
+},200);
+}
+function playVoice(){new Audio("voice.mp3").play();}
+function playReveal(){new Audio("reveal.mp3").play();}
+
+/* WebGL Diamond */
+function startDiamond(){
+const scene=new THREE.Scene();
+const cam=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,1000);
+const ren=new THREE.WebGLRenderer({alpha:true});
+ren.setSize(innerWidth,innerHeight);
+ren.domElement.style.position="fixed";
+ren.domElement.style.pointerEvents="none";
+document.body.appendChild(ren.domElement);
+const geo=new THREE.OctahedronGeometry(2);
+const mat=new THREE.MeshStandardMaterial({color:0xffffff,metalness:1});
+const d=new THREE.Mesh(geo,mat);
+scene.add(d);
+const light=new THREE.PointLight(0xffffff,1);
+light.position.set(5,5,5);
+scene.add(light);
+cam.position.z=5;
+function anim(){
+requestAnimationFrame(anim);
+d.rotation.x+=.01;
+d.rotation.y+=.01;
+ren.render(scene,cam);
+}
+anim();
+}
+
+/* GPS */
+if(navigator.geolocation){
+navigator.geolocation.getCurrentPosition(pos=>{
+if(Math.abs(pos.coords.latitude-28.6139)<.01)
+alert("You Are At Our Special Place 💖");
+});
+}
+
+/* YES */
+function ultimateYes(){
+ringBox.classList.add("open");
+cinematic.classList.add("show");
+fadeMusic();
+playVoice();
+playReveal();
+shootingStar();
+spawnFireworks();
+startDiamond();
+}
+</script>
+
+</body>
+</html>
